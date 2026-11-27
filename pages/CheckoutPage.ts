@@ -9,6 +9,14 @@ import { Address } from '../test-data/test-data';
  * So we always look for "Continue" INSIDE the right panel.
  */
 export class CheckoutPage extends BasePage {
+  // Every step loads the next panel with background (jQuery AJAX) requests.
+  // If we click "Continue" while one is still running, it can overwrite the checkout
+  // session and OpenCart says "Payment method required!" (seen on GitHub Actions).
+  // jQuery.active = number of running requests -> wait until it is 0 before clicking.
+  private async waitForBackgroundRequests() {
+    await this.page.waitForFunction(() => (window as any).jQuery.active === 0);
+  }
+
   // Step 2: Billing Details (a new customer has no saved address yet)
   async fillBillingAddress(address: Address) {
     const billing = this.page.locator('#collapse-payment-address');
@@ -24,7 +32,14 @@ export class CheckoutPage extends BasePage {
     await billing.getByLabel('Country').selectOption({ label: address.country });
     await billing.getByLabel('Region / State').selectOption({ label: address.region });
 
+    await this.waitForBackgroundRequests();
     await billing.getByRole('button', { name: 'Continue' }).click();
+
+    // Wait until Step 3 is open and all its background requests are done
+    await expect(
+      this.page.locator('#collapse-shipping-address').getByRole('button', { name: 'Continue' })
+    ).toBeVisible();
+    await this.waitForBackgroundRequests();
   }
 
   // Step 3: Delivery Details -> "I want to use an existing address" is already selected
@@ -40,6 +55,7 @@ export class CheckoutPage extends BasePage {
     const delivery = this.page.locator('#collapse-shipping-method');
 
     await expect(delivery.getByText('Flat Shipping Rate')).toBeVisible();
+    await this.waitForBackgroundRequests();
     await delivery.getByRole('button', { name: 'Continue' }).click();
   }
 
@@ -49,6 +65,7 @@ export class CheckoutPage extends BasePage {
 
     await expect(payment.getByText('Cash On Delivery')).toBeVisible();
     await payment.getByRole('checkbox').check();
+    await this.waitForBackgroundRequests();
     await payment.getByRole('button', { name: 'Continue' }).click();
   }
 
@@ -80,6 +97,7 @@ export class CheckoutPage extends BasePage {
   }
 
   async confirmOrder() {
+    await this.waitForBackgroundRequests();
     await this.page.getByRole('button', { name: 'Confirm Order' }).click();
   }
 
