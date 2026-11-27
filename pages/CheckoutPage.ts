@@ -34,11 +34,16 @@ export class CheckoutPage extends BasePage {
 
     await this.waitForBackgroundRequests();
     await billing.getByRole('button', { name: 'Continue' }).click();
+
+    // Wait until Step 3 is open and all its background requests are done
+    await expect(
+      this.page.locator('#collapse-shipping-address').getByRole('button', { name: 'Continue' })
+    ).toBeVisible();
+    await this.waitForBackgroundRequests();
   }
 
   // Step 3: Delivery Details -> "I want to use an existing address" is already selected
   async continueWithSameDeliveryAddress() {
-    await this.waitForBackgroundRequests();
     await this.page
       .locator('#collapse-shipping-address')
       .getByRole('button', { name: 'Continue' })
