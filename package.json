@@ -1,0 +1,17 @@
+{
+  "name": "ecommerce-playwright",
+  "version": "1.0.0",
+  "description": "QAMap Video 10 - OpenCart e-commerce automation with Playwright",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.6.8"
+  }
+}
